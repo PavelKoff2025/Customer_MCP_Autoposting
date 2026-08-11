@@ -1,0 +1,25 @@
+{
+  "mcpServers": {
+    "social-autopost": {
+      "command": "node",
+      "args": ["dist/index.js"],
+      "cwd": "./mcp-social-autopost",
+      "env": {
+        "TELEGRAM_BOT_TOKEN": "${TELEGRAM_BOT_TOKEN}",
+        "TELEGRAM_CHAT_ID": "${TELEGRAM_CHAT_ID}",
+        "VK_ACCESS_TOKEN": "${VK_ACCESS_TOKEN}",
+        "VK_GROUP_ID": "${VK_GROUP_ID}",
+        "INSTAGRAM_ACCESS_TOKEN": "${INSTAGRAM_ACCESS_TOKEN}",
+        "INSTAGRAM_ACCOUNT_ID": "${INSTAGRAM_ACCOUNT_ID}",
+        "DZEN_ACCESS_TOKEN": "${DZEN_ACCESS_TOKEN}",
+        "DZEN_CHANNEL_ID": "${DZEN_CHANNEL_ID}",
+        "CONTENT_DIR": "${CONTENT_DIR}",
+        "IMAGE_API_URL": "${IMAGE_API_URL}",
+        "IMAGE_API_KEY": "${IMAGE_API_KEY}",
+        "CLOUDINARY_CLOUD_NAME": "${CLOUDINARY_CLOUD_NAME}",
+        "CLOUDINARY_API_KEY": "${CLOUDINARY_API_KEY}",
+        "CLOUDINARY_API_SECRET": "${CLOUDINARY_API_SECRET}"
+      }
+    }
+  }
+}

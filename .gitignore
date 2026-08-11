@@ -1,0 +1,16 @@
+.DS_Store
+*.log
+.env
+**/.env
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+mcp-social-autopost/storage/sessions/*.json
+!mcp-social-autopost/storage/sessions/.gitkeep
+mcp-social-autopost/storage/images/*
+!mcp-social-autopost/storage/images/.gitkeep
+mcp-social-autopost/storage/state/*
+!mcp-social-autopost/storage/state/.gitkeep
+playwright-report/
+test-results/
