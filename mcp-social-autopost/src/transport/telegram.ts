@@ -42,9 +42,11 @@ export function escapeHtml(text: string): string {
 export function formatTelegramText(
   post: Content["social"]["telegram"],
 ): string {
-  const footer =
-    `@pavelkarikoff\nКурс «Нейросети в маркетинге»: https://pavelkarikoff.ru/course`;
-  return `<b>${escapeHtml(post.title)}</b>\n\n${post.draft}\n\n${post.cta}\n\n${footer}`;
+  // Футер — хэштеги из JSON (управляются скиллом ai_news_to_Social_media).
+  // Промо-блок убран: скилл сам задаёт хэштеги в поле social.telegram.hashtags.
+  const hashtags = (post.hashtags ?? []).filter(Boolean).join(" ");
+  const body = `<b>${escapeHtml(post.title)}</b>\n\n${post.draft}\n\n${post.cta}`;
+  return hashtags ? `${body}\n\n${hashtags}` : body;
 }
 
 function mapTelegramError(error: unknown): string {

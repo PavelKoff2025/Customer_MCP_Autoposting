@@ -24,6 +24,7 @@ export const ContentSchema = z.object({
       title: z.string(),
       draft: z.string(),
       cta: z.string(),
+      hashtags: z.array(z.string()).optional(),
     }),
     vk: z.object({
       hook: z.string(),

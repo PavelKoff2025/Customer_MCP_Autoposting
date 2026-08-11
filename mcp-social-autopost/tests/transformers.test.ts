@@ -28,6 +28,7 @@ const sample = {
       title: "Заголовок <тест>",
       draft: "Текст поста",
       cta: "Читать дальше",
+      hashtags: ["#соло", "#промпт"],
     },
     vk: {
       hook: "Хук VK",
@@ -80,11 +81,14 @@ describe("ContentSchema", () => {
 });
 
 describe("formatters", () => {
-  it("formatTelegramText экранирует HTML и добавляет футер", () => {
+  it("formatTelegramText экранирует HTML и добавляет хэштеги футером", () => {
     const text = formatTelegramText(sample.social.telegram);
     expect(text).toContain("<b>Заголовок &lt;тест&gt;</b>");
-    expect(text).toContain("@pavelkarikoff");
-    expect(text).toContain("https://pavelkarikoff.ru/course");
+    expect(text).toContain("#соло");
+    expect(text).toContain("#промпт");
+    // промо-футер убран
+    expect(text).not.toContain("@pavelkarikoff");
+    expect(text).not.toContain("pavelkarikoff.ru/course");
   });
 
   it("escapeHtml экранирует спецсимволы", () => {
