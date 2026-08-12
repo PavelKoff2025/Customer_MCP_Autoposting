@@ -47,4 +47,13 @@ export abstract class TransportAdapter {
   async listTargetStatuses(): Promise<PlatformStatusRow[]> {
     return [];
   }
+
+  /**
+   * Человекочитаемая причина последней неудачи validateCredentials.
+   * Переопределяется транспортами с нестандартной проверкой (TenChat: сессия протухла).
+   * Используется в list_platforms вместо дефолтного «Токен недействителен».
+   */
+  lastValidateError(): string {
+    return "";
+  }
 }

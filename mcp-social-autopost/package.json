@@ -7,22 +7,24 @@
     "dev": "tsx src/index.ts",
     "start": "node dist/index.js",
     "test": "vitest run",
-    "tenchat:login": "tsx src/browser/tenchat-auth.ts"
+    "tenchat:login": "tsx src/browser/tenchat-auth.ts",
+    "tenchat:keepalive": "tsx src/browser/tenchat-keepalive.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",
     "axios": "^1.7.0",
-    "zod": "^3.24.0",
     "dotenv": "^16.4.0",
+    "form-data": "^4.0.0",
     "pino": "^9.0.0",
-    "sharp": "^0.33.0",
     "playwright": "^1.49.0",
-    "form-data": "^4.0.0"
+    "proxy-agent": "^8.0.2",
+    "sharp": "^0.33.0",
+    "zod": "^3.24.0"
   },
   "devDependencies": {
-    "typescript": "^5.7.0",
     "@types/node": "^22.0.0",
     "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
     "vitest": "^2.1.0"
   }
 }

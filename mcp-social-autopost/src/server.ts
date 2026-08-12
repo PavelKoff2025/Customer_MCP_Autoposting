@@ -17,6 +17,7 @@ import {
   getPlatformStatusResource,
   getHistoryResource,
 } from "./resources/platform-status.js";
+import { reloadConfigIfChanged } from "./config.js";
 import { logger } from "./utils/logger.js";
 
 function ok(text: string) {
@@ -46,6 +47,7 @@ export function createServer(): McpServer {
     "Читает JSON-файл контента, сгенерированный скиллом ai_news_to_Social_media",
     ReadContentInputSchema.shape,
     async (args) => {
+      reloadConfigIfChanged();
       try {
         const input = ReadContentInputSchema.parse(args);
         return ok(await readContentTool(input));
@@ -60,6 +62,7 @@ export function createServer(): McpServer {
     "Проверяет, какие платформы настроены и доступны",
     ListPlatformsInputSchema.shape,
     async (args) => {
+      reloadConfigIfChanged();
       try {
         const input = ListPlatformsInputSchema.parse(args);
         return ok(await listPlatformsTool(input));
@@ -74,6 +77,7 @@ export function createServer(): McpServer {
     "Генерирует изображение по промпту и сохраняет локально",
     GenerateImageInputSchema.shape,
     async (args) => {
+      reloadConfigIfChanged();
       try {
         const input = GenerateImageInputSchema.parse(args);
         return ok(await generateImageTool(input));
@@ -88,6 +92,7 @@ export function createServer(): McpServer {
     "Публикует пост на одну платформу",
     CreatePostInputSchema.shape,
     async (args) => {
+      reloadConfigIfChanged();
       try {
         const input = CreatePostInputSchema.parse(args);
         return ok(await createPostTool(input));
@@ -102,6 +107,7 @@ export function createServer(): McpServer {
     'Публикует на все платформы со статусом "ready"',
     PublishAllInputSchema.shape,
     async (args) => {
+      reloadConfigIfChanged();
       try {
         const input = PublishAllInputSchema.parse(args);
         return ok(await publishAllTool(input));
@@ -116,6 +122,7 @@ export function createServer(): McpServer {
     "Проверяет статус опубликованного поста",
     PostStatusInputSchema.shape,
     async (args) => {
+      reloadConfigIfChanged();
       try {
         const input = PostStatusInputSchema.parse(args);
         return ok(await postStatusTool(input));
@@ -130,6 +137,7 @@ export function createServer(): McpServer {
     "Удаляет или отменяет пост на платформе",
     DeletePostInputSchema.shape,
     async (args) => {
+      reloadConfigIfChanged();
       try {
         const input = DeletePostInputSchema.parse(args);
         return ok(await deletePostTool(input));

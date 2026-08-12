@@ -1,4 +1,3 @@
-import fs from "node:fs/promises";
 import path from "node:path";
 import { chromium, type Page } from "playwright";
 import { config } from "../config.js";
@@ -8,6 +7,11 @@ import {
   type PostResult,
   type PublishOptions,
 } from "./base.js";
+import {
+  sessionFileExists,
+  validateTenchatSession,
+  writeSessionMeta,
+} from "../browser/tenchat-session.js";
 import { formatTenchatHashtags } from "../utils/hashtag.js";
 import { ensureDir } from "../utils/image.js";
 import { logger } from "../utils/logger.js";
@@ -47,17 +51,26 @@ export class TenchatTransport extends TransportAdapter {
   readonly platform = "tenchat";
   readonly displayName = "TenChat";
 
+  /** Кешированная причина последней неудачи валидации (для list_platforms). */
+  private _lastValidateError = "";
+
   isConfigured(): boolean {
     return Boolean(config.tenchat.sessionPath);
   }
 
+  /**
+   * Гибридная валидация: по свежей мете (keep-alive) — без Playwright,
+   * иначе реальная headless-проверка. См. browser/tenchat-session.ts.
+   */
   async validateCredentials(): Promise<boolean> {
-    try {
-      await fs.access(config.tenchat.sessionPath);
-      return true;
-    } catch {
-      return false;
-    }
+    if (!this.isConfigured()) return false;
+    const { valid, reason } = await validateTenchatSession();
+    this._lastValidateError = valid ? "" : reason;
+    return valid;
+  }
+
+  lastValidateError(): string {
+    return this._lastValidateError;
   }
 
   async uploadImage(imagePath: string): Promise<string> {
@@ -69,7 +82,10 @@ export class TenchatTransport extends TransportAdapter {
   }
 
   async publishOne(options: PublishOptions): Promise<PostResult> {
-    const sessionExists = await this.validateCredentials();
+    // Быстрая проверка наличия файла сессии. Реальная валидность определяется
+    // далее через goto /editor — чтобы не запускать браузер дважды (validateCredentials
+    // тоже запускал бы Playwright при устаревшей мете).
+    const sessionExists = sessionFileExists();
     if (!sessionExists) {
       return {
         success: false,
@@ -109,6 +125,7 @@ export class TenchatTransport extends TransportAdapter {
         url.includes("/sign-in") ||
         url.includes("oauth.tenchat.ru/auth")
       ) {
+        await writeSessionMeta(false, "редирект на авторизацию при публикации");
         return {
           success: false,
           platform: this.platform,
@@ -116,6 +133,10 @@ export class TenchatTransport extends TransportAdapter {
             "Сессия истекла. Запустите npm run tenchat:login для повторной авторизации",
         };
       }
+
+      // Сессия валидна — обновляем мету, чтобы list_platforms следующий раз
+      // не запускал Playwright (пока мата свежая — в пределах TENCHAT_SESSION_TTL_HOURS).
+      await writeSessionMeta(true, null);
 
       const input = page.locator(TENCHAT_SELECTORS.postInput).first();
       try {

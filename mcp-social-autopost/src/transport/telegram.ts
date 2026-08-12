@@ -1,6 +1,7 @@
 import fs from "node:fs";
-import axios, { AxiosError } from "axios";
+import axios, { AxiosError, type AxiosInstance } from "axios";
 import FormData from "form-data";
+import { ProxyAgent } from "proxy-agent";
 import { config } from "../config.js";
 import type { Content } from "../schemas/content.js";
 import {
@@ -11,6 +12,31 @@ import {
 import { compressImageIfNeeded } from "../utils/image.js";
 import { logger } from "../utils/logger.js";
 import { withRetry } from "../utils/retry.js";
+
+/**
+ * Axios-клиент для Telegram Bot API.
+ * Если задан TELEGRAM_PROXY_URL — запросы идут через прокси (socks5/http/https),
+ * без системного VPN. Если пусто — напрямую (как прежде).
+ */
+function createTelegramClient(): AxiosInstance {
+  const proxyUrl = config.telegram.proxyUrl;
+  if (proxyUrl) {
+    // ProxyAgent сам выбирает под-агент (SOCKS5/HTTP/HTTPS) по протоколу URL.
+    const agent = new ProxyAgent({ getProxyForUrl: () => proxyUrl });
+    logger.info(
+      { proxy: proxyUrl.replace(/\/\/[^@]*@/, "//***@") },
+      "Telegram: запросы через прокси",
+    );
+    return axios.create({
+      timeout: config.httpTimeoutMs,
+      httpAgent: agent,
+      httpsAgent: agent,
+      // Явно отключаем встроенный прокси axios — используется ProxyAgent.
+      proxy: false,
+    });
+  }
+  return axios.create({ timeout: config.httpTimeoutMs });
+}
 
 interface TelegramApiResponse<T> {
   ok: boolean;
@@ -82,6 +108,8 @@ export class TelegramTransport extends TransportAdapter {
   readonly platform = "telegram";
   readonly displayName = "Telegram";
 
+  private readonly client = createTelegramClient();
+
   private get baseUrl(): string {
     return `https://api.telegram.org/bot${config.telegram.botToken}`;
   }
@@ -93,9 +121,8 @@ export class TelegramTransport extends TransportAdapter {
   async validateCredentials(): Promise<boolean> {
     if (!this.isConfigured()) return false;
     try {
-      const { data } = await axios.get<TelegramApiResponse<TelegramUser>>(
+      const { data } = await this.client.get<TelegramApiResponse<TelegramUser>>(
         `${this.baseUrl}/getMe`,
-        { timeout: config.httpTimeoutMs },
       );
       return data.ok === true;
     } catch (error) {
@@ -153,13 +180,12 @@ export class TelegramTransport extends TransportAdapter {
 
   async deletePost(postId: string): Promise<boolean> {
     try {
-      const { data } = await axios.post<TelegramApiResponse<boolean>>(
+      const { data } = await this.client.post<TelegramApiResponse<boolean>>(
         `${this.baseUrl}/deleteMessage`,
         {
           chat_id: config.telegram.chatId,
           message_id: Number(postId),
         },
-        { timeout: config.httpTimeoutMs },
       );
       return data.ok === true;
     } catch (error) {
@@ -169,7 +195,7 @@ export class TelegramTransport extends TransportAdapter {
   }
 
   private async sendMessage(text: string): Promise<TelegramMessage> {
-    const { data } = await axios.post<TelegramApiResponse<TelegramMessage>>(
+    const { data } = await this.client.post<TelegramApiResponse<TelegramMessage>>(
       `${this.baseUrl}/sendMessage`,
       {
         chat_id: config.telegram.chatId,
@@ -177,7 +203,6 @@ export class TelegramTransport extends TransportAdapter {
         parse_mode: "HTML",
         disable_web_page_preview: false,
       },
-      { timeout: config.httpTimeoutMs },
     );
 
     if (!data.ok || !data.result) {
@@ -201,12 +226,11 @@ export class TelegramTransport extends TransportAdapter {
     form.append("parse_mode", "HTML");
     form.append("photo", fs.createReadStream(compressed));
 
-    const { data } = await axios.post<TelegramApiResponse<TelegramMessage>>(
+    const { data } = await this.client.post<TelegramApiResponse<TelegramMessage>>(
       `${this.baseUrl}/sendPhoto`,
       form,
       {
         headers: form.getHeaders(),
-        timeout: config.httpTimeoutMs,
         maxBodyLength: Infinity,
       },
     );

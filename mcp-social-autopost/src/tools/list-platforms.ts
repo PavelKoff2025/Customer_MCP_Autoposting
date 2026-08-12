@@ -40,7 +40,8 @@ export async function listPlatformsTool(
       try {
         available = await t.validateCredentials();
         if (!available) {
-          error = "Токен недействителен или недоступен";
+          // Транспорт может дать специфичную причину (TenChat: сессия истекла).
+          error = t.lastValidateError() || "Токен недействителен или недоступен";
         }
       } catch (err) {
         available = false;
